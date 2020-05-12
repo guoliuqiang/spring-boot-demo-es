@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: service-search
+
+eshostconfig:
+  es:
+    hostlist: JD:9200 #多个节点用个逗号分割
