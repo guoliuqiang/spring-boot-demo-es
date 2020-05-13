@@ -2,11 +2,19 @@ package com.lhosdp.es.controller;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteResponse;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.support.replication.ReplicationResponse;
+import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.action.update.UpdateResponse;
+import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.Strings;
@@ -14,6 +22,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.Index;
 import org.elasticsearch.index.VersionType;
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 public class EsTestController {
@@ -215,7 +225,7 @@ public class EsTestController {
                 System.out.println("版本号" + indexResponse.getVersion());
                 System.out.println("结果" + indexResponse.getResult());
                 System.out.println("======");
-                System.out.println(checkResult(indexResponse.getResult()));
+                checkResult(indexResponse.getResult());
                 System.out.println(indexResponse.getId());
             }
 
@@ -238,22 +248,109 @@ public class EsTestController {
 
 
     /**
+     * 测试局部修改
+     */
+    @GetMapping("/updateMesage")
+    public void updateMessage() throws IOException {
+        //创建请求
+        UpdateRequest request = new UpdateRequest("test_update","2");
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", "我是郭刘强");
+        //设置请求数据doc
+        request.doc(map);
+        //可选参数
+        request.timeout("1s");
+        request.retryOnConflict(3);//重试次数，3次之后失败就放弃
+
+        UpdateResponse update = client.update(request, RequestOptions.DEFAULT);
+        System.out.println(update.getIndex());
+        this.checkResult(update.getResult());
+        this.checkShare(update.getShardInfo());
+
+    }
+
+    /**
+     * 测试删除
+     */
+    @GetMapping("/testDelete")
+    public void testDelete() throws IOException {
+        //创建请求
+        DeleteRequest deleteRequest = new DeleteRequest("test_update","2");
+        //设置可选参数
+
+        //执行
+        DeleteResponse delete = client.delete(deleteRequest, RequestOptions.DEFAULT);
+        checkShare(delete.getShardInfo());
+        checkResult(delete.getResult());
+
+    }
+
+    /**
+     * 测试批量操作
+     */
+    @GetMapping("/bulk")
+    public void testbulk() throws IOException {
+        //创建请求
+        BulkRequest request = new BulkRequest();
+        //添加
+        request.add(new IndexRequest("post").id("1").source(XContentType.JSON, "filed", "1"));
+        request.add(new IndexRequest("post").id("2").source(XContentType.JSON, "filed", "2"));
+
+        //修改
+        request.add(new UpdateRequest("post","2").doc(XContentType.JSON, "filed","3"));
+        //删除
+        request.add(new DeleteRequest("post","2"));
+
+        //执行
+        BulkResponse bulk = client.bulk(request, RequestOptions.DEFAULT);
+        this.checkBulkResult(bulk);
+
+    }
+
+    /**
+     * 批量请求返回结果处理
+     */
+    public void checkBulkResult(BulkResponse bulkItemResponses){
+        for (BulkItemResponse bulkItemRespons : bulkItemResponses) {
+            DocWriteResponse response = bulkItemRespons.getResponse();
+            switch (bulkItemRespons.getOpType()){
+                case INDEX:
+                    IndexResponse indexResponse = (IndexResponse)response;
+                    this.checkResult(indexResponse.getResult());
+                    break;
+                case CREATE:
+                    IndexResponse indexRespons1 = (IndexResponse) response;
+                    this.checkResult(indexRespons1.getResult());
+                    break;
+                case DELETE:
+                    DeleteResponse deleteResponse = (DeleteResponse) response;
+                    this.checkResult(deleteResponse.getResult());
+                    break;
+                case UPDATE:
+                    UpdateResponse updateResponse = (UpdateResponse) response;
+                    this.checkResult(updateResponse.getResult());
+                    break;
+            }
+        }
+    }
+
+    /**
      * 返回请求结果匹配数据
      * @param result
      * @return
      */
-    private String checkResult(DocWriteResponse.Result result){
+    private void checkResult(DocWriteResponse.Result result){
         if(result == DocWriteResponse.Result.CREATED){
-            return "CREATED :" + result;
+            System.out.println("CREATED :" + result);
         }else if(result == DocWriteResponse.Result.UPDATED){
-            return "UPDATED :" + result;
+            System.out.println("UPDATED :" + result);
         }else if(result == DocWriteResponse.Result.DELETED){
-            return "DELETED :" + result;
+            System.out.println("DELETED :" + result);
         }else if(result == DocWriteResponse.Result.NOOP){
+            System.out.println("NOOP :" + result);
             //没有任何操作，如果数据与原来的数据相同
-            return "NOOP :" + result;
         }else {
-            return "I don't know";
+            System.out.println("I don't know");
         }
     }
 
