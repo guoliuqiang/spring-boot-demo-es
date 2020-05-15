@@ -1,0 +1,56 @@
+#索引管理
+#setting中设置分片数和副本数
+#创建索引
+PUT my_index
+{
+  "settings": {
+    "number_of_shards": 1,  //分片数
+    "number_of_replicas": 1  //副本数
+  },
+  "mappings": { //映射
+    "properties": {
+      "field1":{
+        "type":"text"
+      },
+      "field2":{
+        "type":"text"
+      }
+    }
+  },
+  "aliases": {  //别名
+    "default_index": {}
+  }
+}
+
+
+#给索引中添加数据
+PUT my_index/_doc/1
+{
+  "field1":"java",
+  "field2":"js"
+}
+#查询索引中的数据
+GET my_index/_doc/1
+
+#查询索引中的数据
+GET my_index/_doc/1
+GET default_index/_doc/1
+#获取索引信息
+GET my_index
+#获取索引的maping
+GET my_index/_mapping
+#获取索引的setting
+GET my_index/_settings
+#修改setting中的副本数
+PUT my_index/_settings
+{
+  "index":{
+    "number_of_replicas":2
+  }
+}
+#删除索引
+DELETE my_index
+#删除多个索引
+DELETE /my_index,my_index1,my_index2
+#一般要禁止这个操作
+DELETE /_all
