@@ -298,13 +298,29 @@ public class EsTestController {
         //创建请求
         BulkRequest request = new BulkRequest();
         //添加
-        request.add(new IndexRequest("post").id("1").source(XContentType.JSON, "filed", "1"));
-        request.add(new IndexRequest("post").id("2").source(XContentType.JSON, "filed", "2"));
+        request.add(new IndexRequest("tvs").id("1")
+                .source(XContentType.JSON, "price", "1000", "color","红色","brand","长虹","sold_date","2019-10-28"));
+        request.add(new IndexRequest("tvs").id("2")
+                .source(XContentType.JSON, "price", "2000", "color","红色","brand","长虹","sold_date","2019-11-05"));
+        request.add(new IndexRequest("tvs").id("3")
+                .source(XContentType.JSON, "price", "3000", "color","绿色","brand","小米","sold_date","2019-05-18"));
+        request.add(new IndexRequest("tvs").id("4")
+                .source(XContentType.JSON, "price", "1500", "color","蓝色","brand","TCL","sold_date","2019-07-02"));
+        request.add(new IndexRequest("tvs").id("5")
+                .source(XContentType.JSON, "price", "1200", "color","绿色","brand","TCL","sold_date","2019-08-19"));
+        request.add(new IndexRequest("tvs").id("6")
+                .source(XContentType.JSON, "price", "2000", "color","红色","brand","长虹","sold_date","2019-11-05"));
+        request.add(new IndexRequest("tvs").id("7")
+                .source(XContentType.JSON, "price", "8000", "color","红色","brand","三星","sold_date","2020-01-01"));
+        request.add(new IndexRequest("tvs").id("8")
+                .source(XContentType.JSON, "price", "2500", "color","蓝色","brand","小米","sold_date","2020-02-12"));
 
-        //修改
-        request.add(new UpdateRequest("post","2").doc(XContentType.JSON, "filed","3"));
-        //删除
-        request.add(new DeleteRequest("post","2"));
+//        request.add(new IndexRequest("post").id("2").source(XContentType.JSON, "filed", "2"));
+//
+//        //修改
+//        request.add(new UpdateRequest("post","2").doc(XContentType.JSON, "filed","3"));
+//        //删除
+//        request.add(new DeleteRequest("post","2"));
 
         //执行
         BulkResponse bulk = client.bulk(request, RequestOptions.DEFAULT);
