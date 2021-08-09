@@ -19,7 +19,7 @@
     要不然会报java.lang.NoSuchMethodError: org.elasticsearch.client.Request.addParameters(Ljava/util/Map;)V-->
     <properties>
         <java.version>1.8</java.version>
-        <elasticsearch.version>7.3.0</elasticsearch.version>
+        <elasticsearch.version>7.13.3</elasticsearch.version>
     </properties>
 
     <dependencies>
